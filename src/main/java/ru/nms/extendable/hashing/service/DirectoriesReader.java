@@ -93,7 +93,7 @@ public class DirectoriesReader {
 
         Map<Integer, List<Data>> bucketToData = new HashMap<>();
         var newBucket1 = oldDir << 1;
-        var newBucket2 = oldDir << 1 + 1;
+        var newBucket2 = (oldDir << 1) + 1;
         log.info("New directories: {} and {}", newBucket1, newBucket2);
 
         bucketToData.put(newBucket1, new ArrayList<>());

@@ -6,7 +6,7 @@ public class Constants {
 
     public static final String META_POSTFIX = "_meta";
 
-    public static final String PATH_TO_MAIN_DIRECTORY = "D:\\dev\\extendible_hashing\\";
+    public static final String PATH_TO_MAIN_DIRECTORY = "/Users/astonuser/study/extendible_hashing/";
 
     public static final String DIRECTORIES_FILE_NAME = "directories";
 

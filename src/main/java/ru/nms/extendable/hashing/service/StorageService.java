@@ -18,7 +18,7 @@ public class StorageService {
     }
 
     public void putValueToStorage(Data data) {
-        log.info("Trying to put new data with id {}", data.getId());
+        log.info("Trying to put new data with id {} and data length {}", data.getId(), data.getValue().length);
 
         var hash = hashService.hash(data.getId(), dirs.getGlobalDepth());
         var intHash = Integer.parseInt(hash, 2);
@@ -40,7 +40,8 @@ public class StorageService {
                 bucket.addData(data);
             }
         } catch (Exception e) {
-            throw new DataWriteException();
+            log.error("Didn't manage to put data with id {} to storage", data.getId());
+            throw new RuntimeException(e);
         }
     }
 
@@ -57,7 +58,8 @@ public class StorageService {
                     .orElseThrow(() -> new DataNowFoundException(id));
             return bucket.getData(meta);
         } catch (Exception e) {
-            throw new DataWriteException();
+            log.error("Didn't manage to get data with id {}", id);
+            throw new RuntimeException(e);
         }
     }
 

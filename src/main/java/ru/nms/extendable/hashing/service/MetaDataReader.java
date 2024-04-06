@@ -19,8 +19,8 @@ public class MetaDataReader {
 
     public static List<MetaData> getMetaData(String fileName) {
         File file = Utils.openFile(Constants.PATH_TO_MAIN_DIRECTORY + fileName + Constants.META_POSTFIX);
-        log.info("About to open meta file {}", Constants.PATH_TO_MAIN_DIRECTORY + fileName + Constants.META_POSTFIX);
-        try (RandomAccessFile metaFile = new RandomAccessFile(file, "rw");
+        log.info("About to open meta file {} for reading", Constants.PATH_TO_MAIN_DIRECTORY + fileName + Constants.META_POSTFIX);
+        try (RandomAccessFile metaFile = new RandomAccessFile(file, "r");
         ) {
             List<MetaData> metaData = new ArrayList<>();
             var elementsAmount = metaFile.readInt();
@@ -39,7 +39,7 @@ public class MetaDataReader {
 
     public static void writeMetaData(List<MetaData> metaDataList, String fileName, boolean overwrite) {
         File file = Utils.openFile(Constants.PATH_TO_MAIN_DIRECTORY + fileName + Constants.META_POSTFIX);
-        log.info("About to open meta file {}", Constants.PATH_TO_MAIN_DIRECTORY + fileName + Constants.META_POSTFIX);
+        log.info("About to open meta file {} for writing", Constants.PATH_TO_MAIN_DIRECTORY + fileName + Constants.META_POSTFIX);
         try (RandomAccessFile metaFile = new RandomAccessFile(file, "rw");
         ) {
             int elementsAmount = 0;
@@ -50,7 +50,7 @@ public class MetaDataReader {
                 elementsAmount = metaFile.readInt();
                 pos = metaFile.readLong();
             }
-            log.info("Meta file has {} elements, elememts occupy {} bytes", elementsAmount, pos);
+            log.info("Meta file has {} elements, and has size of {} bytes", elementsAmount, pos);
             metaFile.seek(pos);
             for (MetaData metaData : metaDataList) {
                 metaFile.writeLong(metaData.id());
@@ -65,12 +65,13 @@ public class MetaDataReader {
             log.info("meta data file {} now contains {} elements, which occupy {} bytes",
                     fileName, elementsAmount + metaDataList.size(), current);
         } catch (Exception e) {
-            log.error("Didn't manage to write metadata {} to metadata file {} due to " + e.getMessage(),
-                    metaDataList.stream().map(MetaData::toString).collect(Collectors.joining(", ")),
-                    fileName + Constants.META_POSTFIX);
             if(!overwrite) {
-                log.info("About to attempt overwrite metadata file {} with new data",  fileName + Constants.META_POSTFIX);
+//                log.info("About to attempt overwrite metadata file {} with new data",  fileName + Constants.META_POSTFIX);
                 writeMetaData(metaDataList, fileName, true);
+            } else {
+                log.error("Didn't manage to write metadata {} to metadata file {}",
+                        metaDataList.stream().map(MetaData::toString).collect(Collectors.joining(", ")),
+                        fileName + Constants.META_POSTFIX);
             }
         }
     }

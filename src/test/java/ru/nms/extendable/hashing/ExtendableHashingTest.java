@@ -22,10 +22,25 @@ public class ExtendableHashingTest {
 
 
     @Test
-    @DisplayName("Should successfully add data")
-    void test() {
+    @DisplayName("Should successfully add and get data with total amount under bucket size")
+    void getAndAddLittleAmountOfDataTest() {
         //given
         var dataList = TestDataGenerator.generateDataWithTotalSize(4000);
+
+        //when
+        dataList.forEach(data -> service.putValueToStorage(data));
+
+        //then
+        for (Data data : dataList) {
+            assertDoesNotThrow(() -> service.getData(data.getId()));
+        }
+    }
+
+    @Test
+    @DisplayName("Should successfully add and get data with total amount above bucket size")
+    void getAndAddSignificantAmountOfDataTest() {
+        //given
+        var dataList = TestDataGenerator.generateDataWithTotalSize(10000);
 
         //when
         dataList.forEach(data -> service.putValueToStorage(data));
@@ -46,7 +61,7 @@ public class ExtendableHashingTest {
         try {
             FileUtils.cleanDirectory(new File(Constants.PATH_TO_MAIN_DIRECTORY));
         } catch (IOException e) {
-            throw new RuntimeException("Didn't manage to clean directiry"+e);
+            throw new RuntimeException("Didn't manage to clean directory "+e);
         }
     }
 

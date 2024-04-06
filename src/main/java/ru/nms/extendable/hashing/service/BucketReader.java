@@ -39,15 +39,17 @@ public class BucketReader implements AutoCloseable {
             bucketFile = new RandomAccessFile(file, "rw");
             localDepth = bucketFile.readInt();
             occupiedBytesAmount = bucketFile.readInt();
+            log.info("Successfully read bucket {}, local depth {}, occupied bytes amount {}", file, localDepth, occupiedBytesAmount);
         } catch (Exception e) {
-//            throw new RuntimeException("Didn't manage to read bucket file " + fileName + " due to " + e.getMessage());
-            log.error("Didn't manage to read bucket file {} due to {}, will try to create",
-                    fileName, e.getMessage());
+
             if(!initBucketFile(file)) {
-                throw  new RuntimeException("Didn't manage to create bucket file" + e);
+                throw  new RuntimeException("Didn't manage to read or create bucket file" + e);
             }
             localDepth = globalDepth;
             occupiedBytesAmount = 8;
+            log.info("Created new bucket file {}, local depth {}, occupied bytes amount {}",
+                    fileName, localDepth, occupiedBytesAmount);
+
 
         }
     }
@@ -72,7 +74,7 @@ public class BucketReader implements AutoCloseable {
     }
 
     public boolean bucketCanFitNewData(int dataLength) {
-        log.info("Checking whether bucket can fit: new data has {} bytes, bucket had {} bytes occupied, {} is max bytes amount",
+        log.info("Checking whether bucket can fit: new data has {} bytes, bucket has {} bytes occupied, {} is max bytes amount",
                 dataLength, occupiedBytesAmount, Constants.BUCKET_SIZE);
         return occupiedBytesAmount + dataLength <= Constants.BUCKET_SIZE;
     }
@@ -95,6 +97,7 @@ public class BucketReader implements AutoCloseable {
         }
         data = new ArrayList<>();
         var metadataList = getMetadata();
+        log.info("Reading data from bucket, meta data has {} elements", metadataList.size());
         for (MetaData metaData : metadataList) {
             try {
                 data.add(getData(metaData));
