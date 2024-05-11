@@ -93,19 +93,7 @@ public class DirectoriesReader {
 //        logDirsToLinks();
 
 //        log.info("Trying to write new dirs to {}", Constants.PATH_TO_MAIN_DIRECTORY_WIN + Constants.DIRECTORIES_FILE_NAME);
-        File file = Utils.openFile(Constants.PATH_TO_MAIN_DIRECTORY_WIN + Constants.DIRECTORIES_FILE_NAME);
-        try (RandomAccessFile directoriesFile = new RandomAccessFile(file, "rw")) {
-            directoriesFile.writeInt(globalDepth);
-            directoriesFile.writeInt(bucketSize);
-//            log.info("Dirs now have global depth {}, bucket size {}", globalDepth, bucketSize);
-            for (int i = 0; i < Math.pow(2, globalDepth); i++) {
-                directoriesFile.writeInt(Integer.parseInt(dirsToLinks.get(i), 2));
-                directoriesFile.writeInt(dirsToLinks.get(i).length());
-//                log.info("Dir {} has link {}", i, dirsToLinks.get(i));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
     }
 
 
@@ -140,6 +128,8 @@ public class DirectoriesReader {
                 throw new RuntimeException(e);
             }
         });
+
+        saveDirs();
         if (bucketToData.get(newBucket1).isEmpty()) {
             if (localDepth < globalDepth) {
                 log.warn("Didn't manage to split bucket with local depth {}, and global depth {}, splitting again",
@@ -200,5 +190,21 @@ public class DirectoriesReader {
             list.add(i);
         }
         return list;
+    }
+
+    private void saveDirs() {
+        File file = Utils.openFile(Constants.PATH_TO_MAIN_DIRECTORY_WIN + Constants.DIRECTORIES_FILE_NAME);
+        try (RandomAccessFile directoriesFile = new RandomAccessFile(file, "rw")) {
+            directoriesFile.writeInt(globalDepth);
+            directoriesFile.writeInt(bucketSize);
+//            log.info("Dirs now have global depth {}, bucket size {}", globalDepth, bucketSize);
+            for (int i = 0; i < Math.pow(2, globalDepth); i++) {
+                directoriesFile.writeInt(Integer.parseInt(dirsToLinks.get(i), 2));
+                directoriesFile.writeInt(dirsToLinks.get(i).length());
+//                log.info("Dir {} has link {}", i, dirsToLinks.get(i));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

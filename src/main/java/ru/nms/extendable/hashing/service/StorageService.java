@@ -60,7 +60,7 @@ public class StorageService {
         log.info("Trying to get data with id {}", id);
         var hash = hashService.hash(id, dirs.getGlobalDepth());
         var intHash = Integer.parseInt(hash, 2);
-//        log.info("Hashed id {}. String hash: {}, int hash: {}", id, hash, intHash);
+        log.info("Hashed id {}. String hash: {}, int hash: {}", id, hash, intHash);
         var bucketFileName = dirs.getDirsToLinks().get(intHash);
 
         try (var bucket = new BucketReader(bucketFileName, dirs.getGlobalDepth())) {

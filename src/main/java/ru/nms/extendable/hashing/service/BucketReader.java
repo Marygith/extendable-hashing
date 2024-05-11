@@ -47,7 +47,7 @@ public class BucketReader implements AutoCloseable {
             if(!initBucketFile(file)) {
                 throw  new RuntimeException("Didn't manage to read or create bucket file" + e);
             }
-            localDepth = globalDepth;
+            localDepth = 1;
             occupiedBytesAmount = 8;
 //            log.info("Created new bucket file {}, local depth {}, occupied bytes amount {}",
 //                    fileName, localDepth, occupiedBytesAmount);

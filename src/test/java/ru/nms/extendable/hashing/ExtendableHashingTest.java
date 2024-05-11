@@ -94,6 +94,7 @@ public class ExtendableHashingTest {
         var savedDirs = new DirectoriesReader();
         service = new StorageService(savedDirs, new HashService());
         log.info("Dirs global depth is {}", savedDirs.getGlobalDepth());
+        savedDirs.logDirsToLinks();
         for (Data data : dataList) {
             assertDoesNotThrow(() -> service.getData(data.getId()));
         }
