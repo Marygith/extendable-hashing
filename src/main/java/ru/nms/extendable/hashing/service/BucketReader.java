@@ -71,10 +71,10 @@ public class BucketReader implements AutoCloseable {
         }
     }
 
-    public boolean bucketCanFitNewData(int dataLength) {
+    public boolean bucketCanFitNewData(int dataLength, int bucketSize) {
 //        log.info("Checking whether bucket can fit: new data has {} bytes, bucket has {} bytes occupied, {} is max bytes amount",
 //                dataLength, occupiedBytesAmount, Constants.BUCKET_SIZE);
-        return occupiedBytesAmount + dataLength <= Constants.BUCKET_SIZE;
+        return occupiedBytesAmount + dataLength <= bucketSize;
     }
 
     public boolean localDepthEqualsGlobal(int globalDepth) {
@@ -83,7 +83,9 @@ public class BucketReader implements AutoCloseable {
     }
 
     public List<MetaData> getMetadata() {
-        if (metaData == null) metaData = MetaDataService.getMetaDataReader(fileName).getMetaData();
+        if (metaData == null) {
+//            log.info("metadata is not cached, reading from file");
+            metaData = MetaDataService.getMetaDataReader(fileName).getMetaData();}
         return metaData;
     }
 
@@ -146,6 +148,7 @@ public class BucketReader implements AutoCloseable {
     }
 
     public Data getData(MetaData metaData) throws IOException {
+
         bucketFile.seek(metaData.pos());
         if (bucketFile.readLong() != metaData.id()) throw new MetadataSyncException();
         byte[] value = new byte[metaData.len()];
@@ -164,7 +167,7 @@ public class BucketReader implements AutoCloseable {
         return localDepth;
     }
 
-    public Data deleteDataWithActualRemoval(MetaData metaData) throws IOException {
+/*    public Data deleteDataWithActualRemoval(MetaData metaData) throws IOException {
         var data = getData();
         var dataToRewrite = data.stream().dropWhile(d -> d.getId() != (metaData.id())).toList();
         var dataToDelete = dataToRewrite.removeFirst();
@@ -173,7 +176,7 @@ public class BucketReader implements AutoCloseable {
         if (bucketFile.readLong() != metaData.id()) throw new MetadataSyncException();
         byte[] value = new byte[metaData.len()];
         return new Data(metaData.id(), value);
-    }
+    }*/
 
     private boolean initBucketFile(File file) {
         try {

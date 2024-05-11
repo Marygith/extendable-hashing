@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,11 +48,11 @@ public class DirectoriesReader {
         }
     }
 
-    public DirectoriesReader(int globalDepth) {//create directories file
+    public DirectoriesReader(int globalDepth, int bucketSize) {//create directories file
         File file = Utils.openFile(Constants.PATH_TO_MAIN_DIRECTORY_WIN + Constants.DIRECTORIES_FILE_NAME);
         try (RandomAccessFile directoriesFile = new RandomAccessFile(file, "rw")) {
             this.globalDepth = globalDepth;
-            bucketSize = Constants.BUCKET_SIZE;
+            this.bucketSize = bucketSize;
             directoriesFile.writeInt(globalDepth);
             directoriesFile.writeInt(bucketSize);
             for (int i = 0; i < Math.pow(2, globalDepth); i++) {
@@ -69,7 +70,7 @@ public class DirectoriesReader {
         globalDepth++;
         log.info("Adding directories, global depth now is {}, overflowed bucket {}", globalDepth, overflowedBucket);
 
-//        logDirsToLinks();
+        logDirsToLinks();
         var iterator = dirsToLinks.entrySet().iterator();
         bufferMap.clear();
         while (iterator.hasNext()) {
@@ -87,7 +88,7 @@ public class DirectoriesReader {
         var link = dirsToLinks.get(overflowedBucket);
         dirsToLinks.clear();
         dirsToLinks.putAll(bufferMap);
-        log.info("about to split bucket");
+//        log.info("about to split bucket");
         splitBucket(overflowedBucket, bucket, hashService);
         deleteOldBucket(link);
 //        logDirsToLinks();
@@ -99,28 +100,27 @@ public class DirectoriesReader {
 
     public void splitBucket(int oldDir, BucketReader bucket, HashService hashService) {
         var localDepth = bucket.incrementLocalDepth();
-        log.info("Splitting bucket {}, local depth {}, global depth {}", oldDir, bucket.getLocalDepth(), globalDepth);
+//        log.info("Splitting bucket {}, local depth {}, global depth {}", oldDir, bucket.getLocalDepth(), globalDepth);
 
         Map<Integer, List<Data>> bucketToData = new HashMap<>();
         var newBucket1 = oldDir << 1;
         var newBucket2 = (oldDir << 1) + 1;
 
-        log.info("Split old dir {} into {} and {}", oldDir, newBucket1, newBucket2);
+//        log.info("Split old dir {} into {} and {}", oldDir, newBucket1, newBucket2);
 
         bucketToData.put(newBucket1, new ArrayList<>());
         bucketToData.put(newBucket2, new ArrayList<>());
-
         var dataList = bucket.getData();
         for (Data data : dataList) {
             var hash = Integer.parseInt(hashService.hash(data.getId(), localDepth), 2);
-            log.info("new hash of data with id {} is {}, old hash : {}", data.getId(), hash, Integer.parseInt(hashService.hash(data.getId(), localDepth - 1), 2));
+//            log.info("new hash of data with id {} is {}, old hash : {}", data.getId(), hash, Integer.parseInt(hashService.hash(data.getId(), localDepth - 1), 2));
             bucketToData.get(hash).add(data);
         }
-        logBucketMap(bucketToData);
+//        logBucketMap(bucketToData);
 
         bucketToData.forEach((dir, data) -> {
             var dirCombinations = findAllCombinationsForDir(dir, localDepth);
-            log.info("dir {} combinations {}", dir, dirCombinations);
+//            log.info("dir {} combinations {}", dir, dirCombinations);
             try (var newBucket = new BucketReader(data, localDepth, StringUtils.leftPad(Integer.toBinaryString(dir), localDepth, '0'))) {
                 dirCombinations.forEach((combination) -> dirsToLinks.put(combination, newBucket.getFileName()));
             } catch (Exception e) {
@@ -132,6 +132,7 @@ public class DirectoriesReader {
         saveDirs();
         if (bucketToData.get(newBucket1).isEmpty()) {
             if (localDepth < globalDepth) {
+
                 log.warn("Didn't manage to split bucket with local depth {}, and global depth {}, splitting again",
                         localDepth, globalDepth);
                 splitBucket(newBucket2, bucket, hashService);

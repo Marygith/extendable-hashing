@@ -86,7 +86,7 @@ public class ExtendableHashingTest {
     @DisplayName("Should get data from disk")
     void getDataFromDisk() {
         //given
-        var dataList = TestDataGenerator.generateDataWithTotalSize(20000);
+        var dataList = TestDataGenerator.generateDataWithTotalSize(100000);
         dataList.forEach(data -> service.putValueToStorage(data));
         service = null;
 
@@ -116,6 +116,6 @@ public class ExtendableHashingTest {
     }
 
     private static DirectoriesReader initDirs() {
-        return new DirectoriesReader(1);
+        return new DirectoriesReader(1, Constants.BUCKET_SIZE);
     }
 }

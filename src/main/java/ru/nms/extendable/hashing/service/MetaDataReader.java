@@ -96,7 +96,7 @@ public class MetaDataReader {
     }
 
     private void initMetaFile(String fileName, String mode) throws FileNotFoundException {
-        log.info("Initializing meta file {}", fileName);
+//        log.info("Initializing meta file {}", fileName);
         File file = Utils.openFile(Constants.PATH_TO_MAIN_DIRECTORY_WIN + fileName + Constants.META_POSTFIX);
         //        log.info("About to open meta file {} for reading", Constants.PATH_TO_MAIN_DIRECTORY_WIN + fileName + Constants.META_POSTFIX);
         metaFile = new RandomAccessFile(file, mode);

@@ -11,11 +11,11 @@ import java.util.Random;
 @Slf4j
 public class TestDataGenerator {
 
-    public static List<Data> generateDataWithTotalSize(int bytesTotalAmount) {
+    public static List<Data> generateDataWithTotalSize(int bytesTotalAmount, int bucketSize) {
         var dataList = new ArrayList<Data>();
         Random random = new Random();
         do {
-            int dataLength = Math.min(random.nextInt(9, Constants.BUCKET_SIZE/3), bytesTotalAmount);
+            int dataLength = Math.min(random.nextInt(9, bucketSize / 3), bytesTotalAmount);
             var value = new byte[dataLength - 8];
             random.nextBytes(value);
             dataList.add(new Data(random.nextLong(0, Integer.MAX_VALUE), value));
@@ -31,5 +31,9 @@ public class TestDataGenerator {
                         .mapToInt(Integer::intValue)
                         .sum());
         return dataList;
+    }
+
+    public static List<Data> generateDataWithTotalSize(int bytesTotalAmount) {
+        return generateDataWithTotalSize(bytesTotalAmount, Constants.BUCKET_SIZE);
     }
 }

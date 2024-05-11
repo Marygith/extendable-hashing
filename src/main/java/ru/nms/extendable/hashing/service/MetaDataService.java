@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class MetaDataService {
 
-    private static Map<String, MetaDataReader> META_FILES = new HashMap<>();
+    private static final Map<String, MetaDataReader> META_FILES = new HashMap<>();
 
     public static MetaDataReader getMetaDataReader(String fileName) {
         if(META_FILES.containsKey(fileName)) return META_FILES.get(fileName);
@@ -20,5 +20,9 @@ public class MetaDataService {
         var reader = META_FILES.get(fileName);
         reader.close();
         META_FILES.remove(fileName);
+    }
+
+    public static void clean() {
+        META_FILES.clear();
     }
 }
