@@ -1,6 +1,7 @@
 package ru.nms.extendable.hashing.service;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import ru.nms.extendable.hashing.model.Data;
 import ru.nms.extendable.hashing.model.MetaData;
@@ -19,6 +20,7 @@ import java.util.List;
 @Slf4j
 public class BucketReader implements AutoCloseable {
 
+    @Getter
     private int localDepth;
 
     private int occupiedBytesAmount;
@@ -34,12 +36,12 @@ public class BucketReader implements AutoCloseable {
 
     public BucketReader(String fileName, int globalDepth) { //read existing bucket from file
         this.fileName = fileName;
-        File file = Utils.openFile(Constants.PATH_TO_MAIN_DIRECTORY + fileName);
+        File file = Utils.openFile(Constants.PATH_TO_MAIN_DIRECTORY_WIN + fileName);
         try {
             bucketFile = new RandomAccessFile(file, "rw");
             localDepth = bucketFile.readInt();
             occupiedBytesAmount = bucketFile.readInt();
-            log.info("Successfully read bucket {}, local depth {}, occupied bytes amount {}", file, localDepth, occupiedBytesAmount);
+//            log.info("Successfully read bucket {}, local depth {}, occupied bytes amount {}", file, localDepth, occupiedBytesAmount);
         } catch (Exception e) {
 
             if(!initBucketFile(file)) {
@@ -47,45 +49,41 @@ public class BucketReader implements AutoCloseable {
             }
             localDepth = globalDepth;
             occupiedBytesAmount = 8;
-            log.info("Created new bucket file {}, local depth {}, occupied bytes amount {}",
-                    fileName, localDepth, occupiedBytesAmount);
+//            log.info("Created new bucket file {}, local depth {}, occupied bytes amount {}",
+//                    fileName, localDepth, occupiedBytesAmount);
 
 
         }
     }
 
-    public BucketReader(List<Data> dataList, int localDepth, int dir) { //create new bucket
-        this.fileName = Integer.toBinaryString(dir);
-        File file = Utils.openFile(Constants.PATH_TO_MAIN_DIRECTORY + fileName);
+    public BucketReader(List<Data> dataList, int localDepth, String link) { //create new bucket
+        this.fileName = link;
+        File file = Utils.openFile(Constants.PATH_TO_MAIN_DIRECTORY_WIN + fileName);
         try {
             bucketFile = new RandomAccessFile(file, "rw");
-            bucketFile.writeInt(localDepth);
-            bucketFile.writeInt(dataList.stream()
-                    .map(Data::getValue)
-                    .map(value -> value.length)
-                    .mapToInt(Integer::intValue)
-                    .sum());
+            this.localDepth = localDepth;
+            this.occupiedBytesAmount = 8;
             writeData(dataList, Constants.BUCKET_DATA_START_POS);
         } catch (Exception e) {
-            log.error("Didn't manage to read bucket file {} due to {}",
-                    fileName, e.getMessage());
+//            log.error("Didn't manage to read bucket file {} due to {}",
+//                    fileName, e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
     public boolean bucketCanFitNewData(int dataLength) {
-        log.info("Checking whether bucket can fit: new data has {} bytes, bucket has {} bytes occupied, {} is max bytes amount",
-                dataLength, occupiedBytesAmount, Constants.BUCKET_SIZE);
+//        log.info("Checking whether bucket can fit: new data has {} bytes, bucket has {} bytes occupied, {} is max bytes amount",
+//                dataLength, occupiedBytesAmount, Constants.BUCKET_SIZE);
         return occupiedBytesAmount + dataLength <= Constants.BUCKET_SIZE;
     }
 
     public boolean localDepthEqualsGlobal(int globalDepth) {
-        log.info("Local depth: {}, global depth: {}", localDepth, globalDepth);
+//        log.info("Local depth: {}, global depth: {}", localDepth, globalDepth);
         return globalDepth == localDepth;
     }
 
     public List<MetaData> getMetadata() {
-        if (metaData == null) metaData = MetaDataReader.getMetaData(fileName);
+        if (metaData == null) metaData = MetaDataService.getMetaDataReader(fileName).getMetaData();
         return metaData;
     }
 
@@ -97,13 +95,13 @@ public class BucketReader implements AutoCloseable {
         }
         data = new ArrayList<>();
         var metadataList = getMetadata();
-        log.info("Reading data from bucket, meta data has {} elements", metadataList.size());
+//        log.info("Reading data from bucket, meta data has {} elements", metadataList.size());
         for (MetaData metaData : metadataList) {
             try {
                 data.add(getData(metaData));
-                log.info("Data with id {}, pos {} and value len {} successfully read", metaData.id(), metaData.pos(), metaData.len());
+//                log.info("Data with id {}, pos {} and value len {} successfully read", metaData.id(), metaData.pos(), metaData.len());
             } catch (IOException e) {
-                log.error("Error occurred while reading data with id {}, pos {} and value len {}", metaData.id(), metaData.pos(), metaData.len());
+//                log.error("Error occurred while reading data with id {}, pos {} and value len {}", metaData.id(), metaData.pos(), metaData.len());
                 throw new RuntimeException("Didn't manage to extract data from bucket file");
             }
 
@@ -112,24 +110,25 @@ public class BucketReader implements AutoCloseable {
     }
 
     private void writeData(List<Data> dataList, long pos) {
-        log.info("Trying to write data to bucket {}, pos {}, data size {}",
-                fileName, pos, dataList.size());
+//        log.info("Trying to write data to bucket {}, pos {}, data size {}",
+//                fileName, pos, dataList.size());
         try {
             bucketFile.seek(pos);
             List<MetaData> metaDataList = new ArrayList<>();
+            var dataSumAmount = 0;
             for (Data data : dataList) {
                 metaDataList.add(new MetaData(data.getId(), bucketFile.getFilePointer(), data.getValue().length));
 
                 bucketFile.writeLong(data.getId());
                 bucketFile.write(data.getValue());
+                dataSumAmount += data.getValue().length + 8;
             }
             bucketFile.seek(0);
             bucketFile.writeInt(localDepth);
-            bucketFile.writeInt(occupiedBytesAmount + dataList.stream()
-                    .map(Data::getValue)
-                    .map(value -> value.length + 8)
-                    .mapToInt(Integer::intValue)
-                    .sum());
+            occupiedBytesAmount += dataSumAmount;
+            bucketFile.writeInt(occupiedBytesAmount);
+//            log.info("Successfully wrote {} elements to bucket {}, which now has {} bytes occupied, local depth: {}",
+//                    dataList.size(), fileName, occupiedBytesAmount, localDepth);
             writeMetadata(metaDataList);
 
         } catch (IOException e) {
@@ -138,7 +137,7 @@ public class BucketReader implements AutoCloseable {
     }
 
     private void writeMetadata(List<MetaData> metaDataList) throws IOException {
-        MetaDataReader.writeMetaData(metaDataList, fileName, false);
+        MetaDataService.getMetaDataReader(fileName).writeMetaData(metaDataList, false);
     }
 
     public void addData(Data data) {
@@ -152,6 +151,17 @@ public class BucketReader implements AutoCloseable {
         byte[] value = new byte[metaData.len()];
         bucketFile.read(value);
         return new Data(metaData.id(), value);
+    }
+
+    public Integer incrementLocalDepth() {
+        localDepth = localDepth + 1;
+        try {
+            bucketFile.seek(0);
+        bucketFile.writeInt(localDepth);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return localDepth;
     }
 
     public Data deleteDataWithActualRemoval(MetaData metaData) throws IOException {
@@ -170,7 +180,7 @@ public class BucketReader implements AutoCloseable {
             bucketFile = new RandomAccessFile(file, "rw");
             return true;
         } catch (FileNotFoundException e) {
-            log.error("Didn't manage to init bucket file {}", file.getName());
+//            log.error("Didn't manage to init bucket file {}", file.getName());
             return false;
         }
     }

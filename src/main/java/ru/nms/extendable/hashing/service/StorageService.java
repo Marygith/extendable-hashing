@@ -2,9 +2,7 @@ package ru.nms.extendable.hashing.service;
 
 import lombok.extern.slf4j.Slf4j;
 import ru.nms.extendable.hashing.model.Data;
-import ru.nms.extendable.hashing.exception.DataNowFoundException;
-import ru.nms.extendable.hashing.exception.DataWriteException;
-import ru.nms.extendable.hashing.util.Constants;
+import ru.nms.extendable.hashing.exception.DataNotFoundException;
 
 @Slf4j
 public class StorageService {
@@ -18,53 +16,67 @@ public class StorageService {
     }
 
     public void putValueToStorage(Data data) {
-        log.info("Trying to put new data with id {} and data length {}", data.getId(), data.getValue().length);
+//        log.info("Trying to put new data with id {} and data length {}", data.getId(), data.getValue().length);
 
-        var hash = hashService.hash(data.getId(), dirs.getGlobalDepth());
-        var intHash = Integer.parseInt(hash, 2);
-        log.info("Hashed id {}. String hash: {}, int hash: {}", data.getId(), hash, intHash);
+//        var hash = hashService.hash(data.getId(), dirs.getGlobalDepth());
+//        var intHash = Integer.parseInt(hash, 2);
+//        log.info("Hashed id {}. String hash: {}, int hash: {}", data.getId(), hash, intHash);
 
-        var bucketFileName = dirs.getDirsToLinks().get(intHash);
-        try (var bucket = new BucketReader(bucketFileName, dirs.getGlobalDepth())) {
+        putDataToBucket(data);
+    }
 
-            if (!bucket.bucketCanFitNewData(data.getValue().length + 8)) {
-                log.info("Bucket {} can't fit new data", bucketFileName);
-                if (bucket.localDepthEqualsGlobal(dirs.getGlobalDepth())) {
-                    dirs.addDirectories(intHash, bucket, hashService);
-                } else {
-                    dirs.splitBucket(intHash, bucket, hashService);
+    private void putDataToBucket(Data data) {
+        do {
+            var stringHash = hashService.hash(data.getId(), dirs.getGlobalDepth());
+            log.info("string hash {}", stringHash);
+            var hash = Integer.parseInt(stringHash, 2);
+            var bucketFileName = dirs.getDirsToLinks().get(hash);
+            dirs.logDirsToLinks();
+            try (var bucket = new BucketReader(bucketFileName, dirs.getGlobalDepth())) {
+                log.info("bucket name: {}, local depth {}", bucketFileName, bucket.getLocalDepth());
+
+                if (bucket.bucketCanFitNewData(data.getValue().length)) {
+                    log.info("bucket can fit, adding data with id {} to bucket {}", data.getId(), bucketFileName);
+                    bucket.addData(data);
+                    break;
                 }
-                log.info("Attempting to put data to storage again");
-                putValueToStorage(data);
-            } else {
-                bucket.addData(data);
+                if (bucket.localDepthEqualsGlobal(dirs.getGlobalDepth())) {
+                    log.info("bucket can't fit, adding dirs");
+
+                    dirs.addDirectories(hash, bucket, hashService);
+                } else {
+                    log.info("About to split bucket {}", Integer.parseInt(dirs.getDirsToLinks().get(hash), 2));
+                    dirs.splitBucket(Integer.parseInt(dirs.getDirsToLinks().get(hash), 2), bucket, hashService);
+                }
+            } catch (Exception e) {
+                log.error("Didn't manage to put data with id {} to storage", data.getId());
+                throw new RuntimeException(e);
             }
-        } catch (Exception e) {
-            log.error("Didn't manage to put data with id {} to storage", data.getId());
-            throw new RuntimeException(e);
-        }
+
+        } while (true);
     }
 
     public Data getData(Long id) {
         log.info("Trying to get data with id {}", id);
         var hash = hashService.hash(id, dirs.getGlobalDepth());
         var intHash = Integer.parseInt(hash, 2);
-        log.info("Hashed id {}. String hash: {}, int hash: {}", id, hash, intHash);
+//        log.info("Hashed id {}. String hash: {}, int hash: {}", id, hash, intHash);
         var bucketFileName = dirs.getDirsToLinks().get(intHash);
 
         try (var bucket = new BucketReader(bucketFileName, dirs.getGlobalDepth())) {
             var metadataList = bucket.getMetadata();
+            log.info(metadataList.toString());
+
             var meta = metadataList.parallelStream().filter(m -> m.id() == id).findAny()
-                    .orElseThrow(() -> new DataNowFoundException(id));
+                    .orElseThrow(() -> new DataNotFoundException(id));
             return bucket.getData(meta);
         } catch (Exception e) {
-            log.error("Didn't manage to get data with id {}", id);
+//            log.error("Didn't manage to get data with id {}", id);
             throw new RuntimeException(e);
         }
     }
 
     public boolean deleteData(long id) {
-        log.info("Trying to get data with id {}", id);
         var hash = hashService.hash(id, dirs.getGlobalDepth());
         var intHash = Integer.parseInt(hash, 2);
         var bucketFileName = dirs.getDirsToLinks().get(intHash);
@@ -72,11 +84,11 @@ public class StorageService {
         try (var bucket = new BucketReader(bucketFileName, dirs.getGlobalDepth())) {
             var metadataList = bucket.getMetadata();
             var metaWithoutDeleted = metadataList.parallelStream().filter(m -> m.id() != id).toList();
-            MetaDataReader.writeMetaData(metaWithoutDeleted, bucketFileName, true);
+            MetaDataService.getMetaDataReader(bucketFileName).writeMetaData(metaWithoutDeleted, true);
             return true;
         } catch (Exception e) {
-            log.error("Didn't manage to delete meta data with id {} from file {} due to {}",
-                    id, bucketFileName + Constants.META_POSTFIX, e.getMessage());
+//            log.error("Didn't manage to delete meta data with id {} from file {} due to {}",
+//                    id, bucketFileName + Constants.META_POSTFIX, e.getMessage());
             return false;
         }
     }

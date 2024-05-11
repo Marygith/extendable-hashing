@@ -15,7 +15,7 @@ public class TestDataGenerator {
         var dataList = new ArrayList<Data>();
         Random random = new Random();
         do {
-            int dataLength = Math.min(random.nextInt(9, Constants.BUCKET_SIZE), bytesTotalAmount);
+            int dataLength = Math.min(random.nextInt(9, Constants.BUCKET_SIZE/3), bytesTotalAmount);
             var value = new byte[dataLength - 8];
             random.nextBytes(value);
             dataList.add(new Data(random.nextLong(0, Integer.MAX_VALUE), value));

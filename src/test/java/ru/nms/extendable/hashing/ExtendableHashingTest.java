@@ -1,5 +1,6 @@
 package ru.nms.extendable.hashing;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +16,9 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Slf4j
 public class ExtendableHashingTest {
 
     private static StorageService service;
@@ -51,6 +54,52 @@ public class ExtendableHashingTest {
         }
     }
 
+    @Test
+    @DisplayName("Should successfully add and get data with total amount much above bucket size")
+    void getAndAddLargeAmountOfDataTest() {
+        //given
+        var dataList = TestDataGenerator.generateDataWithTotalSize(150000);
+
+        //when
+        dataList.forEach(data -> service.putValueToStorage(data));
+
+        //then
+        for (Data data : dataList) {
+            assertDoesNotThrow(() -> service.getData(data.getId()));
+        }
+    }
+
+    @Test
+    @DisplayName("Should delete data by id")
+    void deleteDataById() {
+        //given
+        var dataList = TestDataGenerator.generateDataWithTotalSize(150000);
+        dataList.forEach(data -> service.putValueToStorage(data));
+        var data = dataList.getFirst();
+        service.deleteData(data.getId());
+
+        //when-then
+        assertThrows(RuntimeException.class, () -> service.getData(data.getId()));
+    }
+
+    @Test
+    @DisplayName("Should get data from disk")
+    void getDataFromDisk() {
+        //given
+        var dataList = TestDataGenerator.generateDataWithTotalSize(20000);
+        dataList.forEach(data -> service.putValueToStorage(data));
+        service = null;
+
+        //when-then
+        var savedDirs = new DirectoriesReader();
+        service = new StorageService(savedDirs, new HashService());
+        log.info("Dirs global depth is {}", savedDirs.getGlobalDepth());
+        for (Data data : dataList) {
+            assertDoesNotThrow(() -> service.getData(data.getId()));
+        }
+    }
+
+
     @BeforeAll
     public static void initStorageService() {
         service = new StorageService(initDirs(), new HashService());
@@ -59,7 +108,7 @@ public class ExtendableHashingTest {
     @BeforeEach
     public void clean() {
         try {
-            FileUtils.cleanDirectory(new File(Constants.PATH_TO_MAIN_DIRECTORY));
+            FileUtils.cleanDirectory(new File(Constants.PATH_TO_MAIN_DIRECTORY_WIN));
         } catch (IOException e) {
             throw new RuntimeException("Didn't manage to clean directory "+e);
         }
