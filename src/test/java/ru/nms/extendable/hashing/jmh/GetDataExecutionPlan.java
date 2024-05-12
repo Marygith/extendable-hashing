@@ -1,7 +1,6 @@
 package ru.nms.extendable.hashing.jmh;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.openjdk.jmh.annotations.*;
 import ru.nms.extendable.hashing.TestDataGenerator;
 import ru.nms.extendable.hashing.model.Data;
@@ -12,10 +11,7 @@ import ru.nms.extendable.hashing.service.StorageService;
 import ru.nms.extendable.hashing.util.Constants;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @State(Scope.Benchmark)
@@ -41,16 +37,6 @@ public class GetDataExecutionPlan {
 
         log.info("!!! end of setup !!!");
     }
-
-/*    @TearDown(Level.Iteration)
-    public void clean() {
-        log.info("Cleaning...");
-        try {
-            FileUtils.cleanDirectory(new File(Constants.PATH_TO_MAIN_DIRECTORY_WIN));
-        } catch (IOException e) {
-            throw new RuntimeException("Didn't manage to clean directory " + e);
-        }
-    }*/
 
     private StorageService initStorageService(int bucketSize) {
         return new StorageService(initDirs(bucketSize), new HashService());

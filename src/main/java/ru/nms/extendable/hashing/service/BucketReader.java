@@ -65,8 +65,8 @@ public class BucketReader implements AutoCloseable {
             this.occupiedBytesAmount = 8;
             writeData(dataList, Constants.BUCKET_DATA_START_POS);
         } catch (Exception e) {
-//            log.error("Didn't manage to read bucket file {} due to {}",
-//                    fileName, e.getMessage());
+            log.error("Didn't manage to read bucket file {} due to {}",
+                    fileName, e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -185,7 +185,7 @@ public class BucketReader implements AutoCloseable {
             bucketFile = new RandomAccessFile(file, "rw");
             return true;
         } catch (FileNotFoundException e) {
-//            log.error("Didn't manage to init bucket file {}", file.getName());
+            log.error("Didn't manage to init bucket file {}", file.getName());
             return false;
         }
     }

@@ -23,6 +23,7 @@ public class MetaDataService {
     }
 
     public static void clean() {
+        META_FILES.values().forEach(MetaDataReader::close);
         META_FILES.clear();
     }
 }

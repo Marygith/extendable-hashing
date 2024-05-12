@@ -27,6 +27,7 @@ public class PutDataBenchmark {
     public static void main(String[] args) throws Exception {
         org.openjdk.jmh.Main.main(args);
     }
+
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     public void testPut(PutDataExecutionPlan plan) {
@@ -39,14 +40,9 @@ public class PutDataBenchmark {
         plan.dataList.forEach(storageService::putValueToStorage);
     }
 
-
-
-
-    private  StorageService initStorageService(int bucketSize) {
+    private StorageService initStorageService(int bucketSize) {
         return new StorageService(initDirs(bucketSize), new HashService());
     }
-
-
 
     private static DirectoriesReader initDirs(int bucketSize) {
         return new DirectoriesReader(1, bucketSize);

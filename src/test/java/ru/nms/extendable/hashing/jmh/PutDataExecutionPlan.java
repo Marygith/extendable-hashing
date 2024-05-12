@@ -11,10 +11,10 @@ import java.util.List;
 @State(Scope.Benchmark)
 public class PutDataExecutionPlan {
 
-    @Param({ "4096",  "8192",  "16384", "32768"})
+    @Param({"4096", "8192", "16384", "32768"})
     public int bucketSize;
 
-    @Param({ "1000",  "10000",  "50000", "100000", "500000"})
+    @Param({"1000", "10000", "50000", "100000", "500000"})
     public int dataAmountInBytes;
 
     public List<Data> dataList;
