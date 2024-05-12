@@ -92,12 +92,13 @@ public class BucketReader implements AutoCloseable {
 
     public List<Data> getData() {
 
+//        log.info("About to get all data from bucket {}", fileName);
         if (data != null) {
             return data;
         }
         data = new ArrayList<>();
         var metadataList = getMetadata();
-//        log.info("Reading data from bucket, meta data has {} elements", metadataList.size());
+//        log.info("Reading data from bucket {}, meta data : {}", fileName, metadataList);
         for (MetaData metaData : metadataList) {
             try {
                 data.add(getData(metaData));
@@ -143,6 +144,7 @@ public class BucketReader implements AutoCloseable {
     }
 
     public void addData(Data data) {
+//        log.info("About to add data with id {} to bucket {}", data.getId(), fileName);
         long pos = getMetadata().isEmpty() ? Constants.BUCKET_DATA_START_POS : getMetadata().getLast().pos() + 8 + getMetadata().getLast().len();
         writeData(List.of(data), pos);
     }

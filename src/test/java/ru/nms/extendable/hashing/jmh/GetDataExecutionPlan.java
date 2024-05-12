@@ -23,21 +23,23 @@ public class GetDataExecutionPlan {
     @Param({"4096", "8192", "16384", "32768"})
     public int bucketSize;
 
-    @Param({"1000", "10000", "50000", "100000", "500000"})
+    @Param({/*"1000",*/ "10000", "50000", "100000", "500000"})
     public int dataAmountInBytes;
 
     public List<Data> dataList;
 
-    @Setup(Level.Iteration)
+    @Setup(Level.Trial)
     public void generateAndSaveData() {
         dataList = TestDataGenerator.generateDataWithTotalSize(dataAmountInBytes, bucketSize);
-        Constants.PATH_TO_MAIN_DIRECTORY_WIN = Constants.PATH_TO_MAIN_DIRECTORY_WIN_BASE + bucketSize + "\\" + dataAmountInBytes + "\\";
-        assertTrue(new File(Constants.PATH_TO_MAIN_DIRECTORY_WIN).mkdirs());
+        Constants.PATH_TO_MAIN_DIRECTORY_WIN = Constants.PATH_TO_MAIN_DIRECTORY_WIN_BASE + bucketSize + "\\" + dataAmountInBytes + "\\" + System.currentTimeMillis() + "\\";
+        new File(Constants.PATH_TO_MAIN_DIRECTORY_WIN).mkdirs();
         MetaDataService.clean();
 
         log.info("Dir name: {}", Constants.PATH_TO_MAIN_DIRECTORY_WIN);
         var storageService = initStorageService(bucketSize);
         dataList.forEach(storageService::putValueToStorage);
+
+        log.info("!!! end of setup !!!");
     }
 
 /*    @TearDown(Level.Iteration)

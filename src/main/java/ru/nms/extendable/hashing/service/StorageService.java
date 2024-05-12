@@ -55,10 +55,10 @@ public class StorageService {
         var intHash = Integer.parseInt(hash, 2);
 //        log.info("Hashed id {}. String hash: {}, int hash: {}", id, hash, intHash);
         var bucketFileName = dirs.getDirsToLinks().get(intHash);
-
+//        dirs.logDirsToLinks();
         try (var bucket = new BucketReader(bucketFileName, dirs.getGlobalDepth())) {
             var metadataList = bucket.getMetadata();
-//            log.info(metadataList.toString());
+//            log.info("metadata from bucket {} is {}", bucketFileName, metadataList.toString());
 
             var meta = metadataList.parallelStream().filter(m -> m.id() == id).findAny()
                     .orElseThrow(() -> new DataNotFoundException(id));
@@ -70,6 +70,7 @@ public class StorageService {
     }
 
     public void deleteData(long id) {
+//        log.info("About to delete data with id {}", id);
         var hash = hashService.hash(id, dirs.getGlobalDepth());
         var intHash = Integer.parseInt(hash, 2);
         var bucketFileName = dirs.getDirsToLinks().get(intHash);

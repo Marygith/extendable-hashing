@@ -68,9 +68,9 @@ public class DirectoriesReader {
 
     public void addDirectories(int overflowedBucket, BucketReader bucket, HashService hashService) {
         globalDepth++;
-        log.info("Adding directories, global depth now is {}, overflowed bucket {}", globalDepth, overflowedBucket);
+//        log.info("Adding directories, global depth now is {}, overflowed bucket {}", globalDepth, overflowedBucket);
 
-        logDirsToLinks();
+//        logDirsToLinks();
         var iterator = dirsToLinks.entrySet().iterator();
         bufferMap.clear();
         while (iterator.hasNext()) {
