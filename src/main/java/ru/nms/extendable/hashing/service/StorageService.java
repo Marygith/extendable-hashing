@@ -19,24 +19,19 @@ public class StorageService {
     public void putValueToStorage(Data data) {
         do {
             var stringHash = hashService.hash(data.getId(), dirs.getGlobalDepth());
-//            log.info("string hash {}", stringHash);
+
             var hash = Integer.parseInt(stringHash, 2);
             var bucketFileName = dirs.getDirsToLinks().get(hash);
-//            dirs.logDirsToLinks();
-            try (var bucket = new BucketReader(bucketFileName, dirs.getGlobalDepth())) {
-//                log.info("bucket name: {}, local depth {}", bucketFileName, bucket.getLocalDepth());
+
+            try (var bucket = new BucketReader(bucketFileName)) {
 
                 if (bucket.bucketCanFitNewData(data.getValue().length, dirs.getBucketSize())) {
-//                    log.info("bucket can fit, adding data with id {} to bucket {}", data.getId(), bucketFileName);
                     bucket.addData(data);
                     break;
                 }
                 if (bucket.localDepthEqualsGlobal(dirs.getGlobalDepth())) {
-//                    log.info("bucket can't fit, adding dirs");
-
                     dirs.addDirectories(hash, bucket, hashService);
                 } else {
-//                    log.info("About to split bucket {}", Integer.parseInt(dirs.getDirsToLinks().get(hash), 2));
                     dirs.splitBucket(Integer.parseInt(dirs.getDirsToLinks().get(hash), 2), bucket, hashService);
                 }
             } catch (Exception e) {
@@ -50,15 +45,11 @@ public class StorageService {
 
     public Data getData(Long id) {
 
-//        log.info("Trying to get data with id {}", id);
         var hash = hashService.hash(id, dirs.getGlobalDepth());
         var intHash = Integer.parseInt(hash, 2);
-//        log.info("Hashed id {}. String hash: {}, int hash: {}", id, hash, intHash);
         var bucketFileName = dirs.getDirsToLinks().get(intHash);
-//        dirs.logDirsToLinks();
-        try (var bucket = new BucketReader(bucketFileName, dirs.getGlobalDepth())) {
+        try (var bucket = new BucketReader(bucketFileName)) {
             var metadataList = bucket.getMetadata();
-//            log.info("metadata from bucket {} is {}", bucketFileName, metadataList.toString());
 
             var meta = metadataList.parallelStream().filter(m -> m.id() == id).findAny()
                     .orElseThrow(() -> new DataNotFoundException(id));
@@ -70,12 +61,11 @@ public class StorageService {
     }
 
     public void deleteData(long id) {
-//        log.info("About to delete data with id {}", id);
         var hash = hashService.hash(id, dirs.getGlobalDepth());
         var intHash = Integer.parseInt(hash, 2);
         var bucketFileName = dirs.getDirsToLinks().get(intHash);
 
-        try (var bucket = new BucketReader(bucketFileName, dirs.getGlobalDepth())) {
+        try (var bucket = new BucketReader(bucketFileName)) {
             var metadataList = bucket.getMetadata();
             var metaWithoutDeleted = metadataList.parallelStream().filter(m -> m.id() != id).toList();
             MetaDataService.getMetaDataReader(bucketFileName).writeMetaData(metaWithoutDeleted, true);

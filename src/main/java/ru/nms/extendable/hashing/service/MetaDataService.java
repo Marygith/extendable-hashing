@@ -8,7 +8,7 @@ public class MetaDataService {
     private static final Map<String, MetaDataReader> META_FILES = new HashMap<>();
 
     public static MetaDataReader getMetaDataReader(String fileName) {
-        if(META_FILES.containsKey(fileName)) return META_FILES.get(fileName);
+        if (META_FILES.containsKey(fileName)) return META_FILES.get(fileName);
         else {
             var reader = new MetaDataReader(fileName);
             META_FILES.put(fileName, reader);

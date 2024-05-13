@@ -12,8 +12,6 @@ import ru.nms.extendable.hashing.util.Constants;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @Slf4j
 @Fork(value = 1, warmups = 1)
 @State(Scope.Benchmark)
@@ -32,7 +30,7 @@ public class PutDataBenchmark {
     @BenchmarkMode(Mode.Throughput)
     public void testPut(PutDataExecutionPlan plan) {
         Constants.PATH_TO_MAIN_DIRECTORY_WIN = Constants.PATH_TO_MAIN_DIRECTORY_WIN_BASE + plan.bucketSize + "\\" + plan.dataAmountInBytes + "\\" + System.currentTimeMillis() + "\\";
-        assertTrue(new File(Constants.PATH_TO_MAIN_DIRECTORY_WIN).mkdirs());
+        new File(Constants.PATH_TO_MAIN_DIRECTORY_WIN).mkdirs();
         MetaDataService.clean();
 
         log.info("Dir name: {}", Constants.PATH_TO_MAIN_DIRECTORY_WIN);
